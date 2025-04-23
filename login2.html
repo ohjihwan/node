@@ -20,6 +20,7 @@
 			.then((res) => res.text())
 			.then((data) => {
 				console.log('서버 응답: ' + data);
+				window.location.href = `/result.html?userid=${userid}&userpw=${userpw}`;
 			})
 			.catch((err) => {
 				console.log('에러 발생', err)
