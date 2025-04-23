@@ -2,14 +2,17 @@
 	"name": "myapp",
 	"version": "1.0.0",
 	"scripts": {
-		"start": "node 6_JSON.js",
-		"dev": "nodemon 6_JSON.js"
+		"start": "node 15_routing.mjs",
+		"dev": "nodemon 15_routing.mjs"
 	},
 	"devDependencies": {
 		"nodemon": "^3.0.0"
 	},
 	"dependencies": {
 		"ejs": "^3.1.10",
-		"express": "^5.1.0"
+		"experss": "^0.0.1-security",
+		"express": "^5.1.0",
+		"swagger-jsdoc": "^6.2.8",
+		"swagger-ui-express": "^5.0.1"
 	}
 }
