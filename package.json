@@ -1,6 +1,7 @@
 {
 	"name": "myapp",
 	"version": "1.0.0",
+	"main": "10_get.mjs",
 	"scripts": {
 		"start": "node 10_get.mjs",
 		"dev": "nodemon 10_get.mjs"
