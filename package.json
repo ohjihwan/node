@@ -2,8 +2,8 @@
 	"name": "myapp",
 	"version": "1.0.0",
 	"scripts": {
-		"start": "node 15_routing.mjs",
-		"dev": "nodemon 15_routing.mjs"
+		"start": "node 10_get.mjs",
+		"dev": "nodemon 10_get.mjs"
 	},
 	"devDependencies": {
 		"nodemon": "^3.0.0"
@@ -12,7 +12,10 @@
 		"ejs": "^3.1.10",
 		"experss": "^0.0.1-security",
 		"express": "^5.1.0",
+		"express-session": "^1.18.1",
+		"session": "^0.1.0",
 		"swagger-jsdoc": "^6.2.8",
-		"swagger-ui-express": "^5.0.1"
+		"swagger-ui-express": "^5.0.1",
+		"sxpress": "^1.0.3"
 	}
 }
