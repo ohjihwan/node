@@ -1,9 +1,10 @@
-import { Socket } from "dgram";
 import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { Server } from "socket.io";
 import { fileURLToPath } from "url";
+import fs from "fs";
+import { channel } from "diagnostics_channel";
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
@@ -13,9 +14,29 @@ const io = new Server(server);
 // path.dirname: 디렉토리 이름만 추출
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir);
+
 app.use(express.static(path.join(__dirname, "public")));
+
 const users = {};
-const channels = ["lobby", "sports", "programming", "music"];
+
+function getLog() {
+	const file = path.join(logsDir, `${channel}.json`);
+	return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : [];
+}
+
+function logMessage(channel, message) {
+	const file = path.join(logsDir, `${channel}.json`);
+	try {
+		const log = getLog(channel);
+		log.push(message);
+		fs.writeFileSync(file, JSON.stringify(log, null, 2))
+	} catch(err) {
+		console.log('에러발생!!');
+	}
+}
+
 io.on("connection", (socket) => {
 	socket.on("join", ({ nickname, channel }) => {
 		socket.nickname = nickname;
@@ -24,7 +45,12 @@ io.on("connection", (socket) => {
 		socket.join(channel);
 		const msg = { user: "system", text: `${nickname}님이 입장했습니다.` };
 		io.to(channel).emit("message", msg);
-		console.log("nickname: ", nickname, "channel :", channel);
+		// console.log("nickname: ", nickname, "channel :", channel);
+		logMessage(channel, msg);
+
+		const previousLog = getLog(channel);
+		socket.emit('chatLog', previousLog);
+
 		updateUserList();
 	});
 	socket.on("chat", ({ text, to }) => {
@@ -42,8 +68,33 @@ io.on("connection", (socket) => {
 			}
 		} else {
 			io.to(sender.channel).emit("message", payload);
+			logMessage(sender.channel, payload);
 		}
 	});
+
+	socket.on("changeChannel", ({ newChannel }) => {
+		const oldChannel = socket.channel;
+		const nickname = socket.nickname;
+		socket.leave(oldChannel);
+		io.to(oldChannel).emit("message", {
+			user: "system",
+			text: `${nickname}님이 ${newChannel} 채널로 이동했습니다`,
+		});
+		socket.channel = newChannel;
+		users[socket.id].channel = newChannel;
+		socket.join(newChannel);
+
+		const joinMsg = { user: "system", text: `${nickname}님이 입장했습니다` };
+		io.to(newChannel).emit("message", joinMsg);
+
+		logMessage(newChannel, joinMsg);
+
+		const previousLog = getLog(newChannel);
+		socket.emit("chatLog", previousLog);
+
+		updateUserList();
+	});
+
 	socket.on("disconnect", () => {
 		const user = users[socket.id];
 		if (user) {
@@ -52,10 +103,13 @@ io.on("connection", (socket) => {
 				text: `${user.nickname}님이 퇴장했습니다.`,
 			};
 			io.to(user.channel).emit("message", msg);
+			logMessage(user.channel, msg);
 			delete users[socket.id];
+
 			updateUserList();
 		}
 	});
+
 	function updateUserList() {
 		const userList = Object.values(users); // [{nickname, channel}, .. ]
 		io.emit("userList", userList);
